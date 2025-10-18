@@ -1,0 +1,348 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Header */
+header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 40px 20px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    font-size: 2.5em;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    font-size: 1.2em;
+    color: #7f8c8d;
+}
+
+/* Input Section */
+.input-section {
+    margin-bottom: 40px;
+}
+
+.input-card {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.input-card h2 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-size: 1.8em;
+}
+
+.help-text {
+    color: #7f8c8d;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+#promptInput {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 16px;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.3s;
+    margin-bottom: 20px;
+}
+
+#promptInput:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+.language-selector {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.language-selector label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.language-selector input[type="radio"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.generate-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+.generate-btn:active {
+    transform: translateY(0);
+}
+
+.generate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.error-message {
+    margin-top: 15px;
+    padding: 15px;
+    background: #fee;
+    border: 1px solid #fcc;
+    border-radius: 8px;
+    color: #c33;
+}
+
+/* Output Section */
+.output-section {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    margin-bottom: 40px;
+}
+
+.output-header h2 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+}
+
+.story-text {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    font-size: 1.1em;
+    line-height: 1.8;
+    color: #555;
+    border-left: 4px solid #667eea;
+}
+
+.frames-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.frame-card {
+    background: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.frame-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+.frame-image {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    background: #f0f0f0;
+}
+
+.frame-content {
+    padding: 20px;
+}
+
+.frame-number {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.frame-rhyme {
+    font-size: 1.1em;
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 10px;
+    font-style: italic;
+}
+
+.frame-description {
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.frame-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.meta-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    background: #f0f0f0;
+    border-radius: 15px;
+    font-size: 0.85em;
+    color: #666;
+}
+
+.meta-tag.moral {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.meta-tag.shot {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    padding: 15px 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+.action-btn.secondary {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    color: white;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-substep {
+    margin-top: 10px;
+    color: #bbb;
+    font-size: 0.9em;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 20px;
+    color: #7f8c8d;
+    font-size: 0.9em;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 2em;
+    }
+
+    .input-card, .output-section {
+        padding: 25px;
+    }
+
+    .frames-container {
+        grid-template-columns: 1fr;
+    }
+
+    .language-selector {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .action-btn {
+        width: 100%;
+    }
+}

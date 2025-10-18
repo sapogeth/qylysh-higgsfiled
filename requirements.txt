@@ -1,0 +1,16 @@
+flask>=3.0.0
+openai>=2.5.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+pillow>=10.0.0
+
+# Image Generation - Stable Diffusion XL with LoRA
+torch>=2.0.0
+torchvision>=0.15.0
+diffusers>=0.25.0
+transformers>=4.35.0
+accelerate>=0.25.0
+safetensors>=0.4.0
+peft>=0.7.0
+scipy>=1.11.0
+omegaconf>=2.3.0

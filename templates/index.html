@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aldar Köse Storyboard Generator</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎨 Aldar Köse Storyboard Generator</h1>
+            <p class="subtitle">Transform any idea into a visual Aldar Köse story</p>
+        </header>
+
+        <!-- Input Section -->
+        <section class="input-section">
+            <div class="input-card">
+                <h2>Enter Your Story Idea</h2>
+                <p class="help-text">
+                    Describe any situation, lesson, or adventure. We'll automatically create an Aldar Köse story from it!
+                </p>
+
+                <textarea
+                    id="promptInput"
+                    placeholder="Example: A greedy merchant refuses to share food with hungry travelers..."
+                    rows="4"
+                ></textarea>
+
+                <div class="language-selector">
+                    <label>
+                        <input type="radio" name="language" value="en" checked> English
+                    </label>
+                    <label>
+                        <input type="radio" name="language" value="kk"> Қазақша
+                    </label>
+                    <label>
+                        <input type="radio" name="language" value="ru"> Русский
+                    </label>
+                </div>
+
+                <button id="generateBtn" class="generate-btn">
+                    <span class="btn-text">Generate Storyboard</span>
+                    <span class="btn-loading" style="display: none;">Generating...</span>
+                </button>
+
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- Output Section -->
+        <section class="output-section" id="outputSection" style="display: none;">
+            <div class="output-header">
+                <h2>Your Aldar Köse Storyboard</h2>
+                <div id="storyText" class="story-text"></div>
+            </div>
+
+            <div id="framesContainer" class="frames-container">
+                <!-- Frames will be dynamically inserted here -->
+            </div>
+
+            <div class="action-buttons">
+                <button id="downloadBtn" class="action-btn">Download All Images</button>
+                <button id="newStoryBtn" class="action-btn secondary">Create New Story</button>
+            </div>
+        </section>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+            <div class="spinner"></div>
+            <p>Creating your Aldar Köse storyboard...</p>
+            <p class="loading-substep">This may take 1-2 minutes</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>Powered by GPT-4 & DALL-E 3 | Aldar Köse - Kazakh Folk Hero</p>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

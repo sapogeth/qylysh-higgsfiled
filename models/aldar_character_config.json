@@ -1,0 +1,30 @@
+{
+  "trigger_word": "aldar_kose_character",
+  "description": "aldar_kose_character, 2D storybook illustration of Kazakh folk hero, orange patterned chapan robe with traditional ornaments, friendly smiling expression, small topknot hairstyle, round face, warm skin tone, simplified cartoon proportions, children's book art style, professional illustration",
+  "appearance": {
+    "clothing": "orange patterned chapan robe with traditional Kazakh ornaments",
+    "hairstyle": "small topknot/ponytail hairstyle, black hair",
+    "face": "round friendly face, narrow eyes, warm skin tone, smiling expression",
+    "proportions": "simplified cartoon proportions, big head, shorter body",
+    "style": "2D storybook illustration, children's book art"
+  },
+  "cultural_elements": [
+    "Kazakh traditional clothing",
+    "folk art aesthetic",
+    "warm earthy colors",
+    "ornamental patterns"
+  ],
+  "reference_images": [
+    "aldar1.png",
+    "aldar2.png",
+    "aldar3.png",
+    "aldar4.png",
+    "aldar5.png"
+  ],
+  "negative_traits": [
+    "3D render",
+    "realistic photo",
+    "modern clothing",
+    "wrong ethnicity"
+  ]
+}
