@@ -56,16 +56,25 @@ ENABLE_VAE_TILING = True  # Handle larger images efficiently
 # Image generation parameters
 IMAGE_WIDTH = 1024
 IMAGE_HEIGHT = 1024
-NUM_INFERENCE_STEPS = 35  # Higher = better quality (20-50 recommended)
-GUIDANCE_SCALE = 7.5  # How closely to follow prompt (7-9 recommended)
+NUM_INFERENCE_STEPS = 30  # Optimized: 30 steps = best quality/speed balance
+GUIDANCE_SCALE = 8.0  # Increased for better prompt adherence with LoRA
+
+# Scheduler settings (for speed optimization)
+USE_FAST_SCHEDULER = True  # Use Euler Ancestral (faster, high quality)
+SCHEDULER_TYPE = "euler_a"  # Options: "dpm", "euler_a", "ddim"
 
 # Parallel generation settings
-PARALLEL_BATCH_SIZE = 2  # M1 Air with 8GB can handle 2 images at once
-MAX_WORKERS = 2  # Number of parallel workers
+PARALLEL_BATCH_SIZE = 1  # M1 optimization: sequential is more stable
+MAX_WORKERS = 1  # Single worker prevents memory issues
 
 # Quality settings
 ENABLE_QUALITY_VALIDATION = True
 MAX_REGENERATION_ATTEMPTS = 2  # How many times to retry failed generations
+
+# Speed optimizations
+ENABLE_TORCH_COMPILE = False  # Disabled: torch.compile not stable on MPS yet
+ENABLE_MODEL_CPU_OFFLOAD = False  # Keep model on MPS for speed
+USE_KARRAS_SIGMAS = True  # Better noise schedule (quality improvement)
 
 # ===== LORA TRAINING CONFIGURATION =====
 

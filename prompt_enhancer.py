@@ -8,6 +8,16 @@ from pathlib import Path
 from typing import Dict, Any
 import config
 
+# Import CLIP tokenizer for accurate token counting
+try:
+    from transformers import CLIPTokenizer
+    TOKENIZER = CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14")
+    TOKENIZER_AVAILABLE = True
+except Exception as e:
+    print(f"Warning: CLIP tokenizer not available: {e}")
+    TOKENIZER = None
+    TOKENIZER_AVAILABLE = False
+
 
 class PromptEnhancer:
     """Enhances storyboard frame descriptions for optimal SDXL image generation"""
@@ -18,14 +28,17 @@ class PromptEnhancer:
         # Load character configuration
         self.character_config = self._load_character_config()
 
-        # Shot type mappings to visual descriptions
+        # CLIP token limit
+        self.MAX_TOKENS = 75  # Safe limit (CLIP allows 77, but we use 75 for safety)
+
+        # Shot type mappings to visual descriptions (short forms)
         self.shot_type_prompts = {
-            'establishing': 'wide establishing shot, panoramic view, showing full scene and environment',
-            'wide': 'wide shot, full body visible, showing character and surroundings',
-            'medium': 'medium shot, waist-up view, showing upper body and facial expression',
-            'two-shot': 'two-shot composition, two characters in frame, conversational framing',
-            'close-up': 'close-up portrait, face and shoulders, detailed facial expression',
-            'over-shoulder': 'over-shoulder shot, view from behind one character looking at another'
+            'establishing': 'wide landscape',
+            'wide': 'full body',
+            'medium': 'waist-up',
+            'two-shot': 'two people',
+            'close-up': 'face portrait',
+            'over-shoulder': 'over shoulder'
         }
 
         # Kazakh cultural elements to emphasize
@@ -41,6 +54,55 @@ class PromptEnhancer:
             'warm earthy colors',
             'cultural authenticity'
         ]
+
+    def _count_tokens(self, text: str) -> int:
+        """
+        Count the number of CLIP tokens in a text string
+
+        Args:
+            text: The text to count tokens for
+
+        Returns:
+            Number of tokens
+        """
+        if TOKENIZER_AVAILABLE and TOKENIZER is not None:
+            tokens = TOKENIZER.encode(text, add_special_tokens=False)
+            return len(tokens)
+        else:
+            # Fallback: rough estimate (1 token ≈ 4 characters)
+            return len(text) // 4
+
+    def _truncate_to_token_limit(self, text: str, max_tokens: int = None) -> str:
+        """
+        Truncate text to fit within token limit
+
+        Args:
+            text: The text to truncate
+            max_tokens: Maximum number of tokens (defaults to self.MAX_TOKENS)
+
+        Returns:
+            Truncated text that fits within token limit
+        """
+        if max_tokens is None:
+            max_tokens = self.MAX_TOKENS
+
+        if not TOKENIZER_AVAILABLE or TOKENIZER is None:
+            # Fallback: character-based truncation
+            max_chars = max_tokens * 4
+            return text[:max_chars]
+
+        # Tokenize the text
+        tokens = TOKENIZER.encode(text, add_special_tokens=False)
+
+        # If already within limit, return as is
+        if len(tokens) <= max_tokens:
+            return text
+
+        # Truncate tokens and decode back
+        truncated_tokens = tokens[:max_tokens]
+        truncated_text = TOKENIZER.decode(truncated_tokens)
+
+        return truncated_text
 
     def _load_character_config(self) -> Dict:
         """Load character configuration from JSON file"""
@@ -66,66 +128,184 @@ class PromptEnhancer:
     def enhance(self, frame: Dict[str, Any]) -> str:
         """
         Enhance a frame description into an optimized SDXL prompt
-        Keeps prompt under 77 tokens for CLIP compatibility
+        Keeps prompt under 75 tokens for CLIP compatibility
 
         Args:
             frame: Dictionary containing frame details (description, shot_type, setting, etc.)
 
         Returns:
-            Enhanced prompt string optimized for SDXL (under 77 tokens)
+            Enhanced prompt string optimized for SDXL (under 75 tokens)
         """
 
         # Extract frame details
         description = frame.get('description', '')
         shot_type = frame.get('shot_type', 'medium')
         setting = frame.get('setting', 'Kazakh steppe')
-        key_objects = frame.get('key_objects', [])
 
-        # Build concise prompt components (optimized for 77 token limit)
-        components = []
+        # Detect if text is non-English (Cyrillic/Kazakh takes 2-3x more tokens)
+        is_non_english = self._is_non_english(description)
 
-        # 1. Core scene (most important)
-        # Shorten description to essential elements
-        core_scene = description[:80] if len(description) > 80 else description
-        components.append(core_scene)
+        # For non-English text, use MUCH simpler prompts
+        if is_non_english:
+            # Translate key elements to English for SDXL
+            core_scene = self._translate_to_english_description(description)
+            character = "Aldar Kose character"
+            style = "2D art, Kazakh style"
 
-        # 2. Character essentials (compact)
-        components.append("Kazakh folk hero, orange chapan robe, topknot hair")
+            # Very minimal prompt for non-English
+            prompt_parts = [core_scene, character, style]
+            current_prompt = ", ".join(prompt_parts)
+        else:
+            # English text - use full enhancement
+            # 1. ESSENTIAL: Core scene description (most important)
+            core_scene = self._simplify_description(description)
 
-        # 3. Shot type (short form)
-        shot_mapping = {
-            'establishing': 'wide landscape',
-            'wide': 'full body shot',
-            'medium': 'waist-up',
-            'two-shot': 'two characters',
-            'close-up': 'face portrait',
-            'over-shoulder': 'over shoulder view'
-        }
-        components.append(shot_mapping.get(shot_type, 'medium shot'))
+            # 2. ESSENTIAL: Character identification (compact)
+            character = "Aldar Kose, orange chapan, topknot"
 
-        # 4. Setting (brief)
-        components.append(setting.split(' at ')[0])  # Just location, not time
+            # 3. ESSENTIAL: Visual style (compact)
+            style = "2D storybook, warm colors, Kazakh folk art"
 
-        # 5. Style (compact)
-        components.append("2D storybook art, warm colors, Kazakh folk style")
+            # 4. OPTIONAL: Shot type (if space allows)
+            shot = self.shot_type_prompts.get(shot_type, 'medium')
 
-        # 6. Quality (minimal)
-        components.append("detailed, masterpiece")
+            # 5. OPTIONAL: Setting (if space allows)
+            setting_brief = self._simplify_setting(setting)
 
-        # Combine all components
-        enhanced_prompt = ", ".join(components)
+            # 6. OPTIONAL: Quality tags (if space allows)
+            quality = "detailed, masterpiece"
 
-        # Clean up
-        enhanced_prompt = self._clean_prompt(enhanced_prompt)
+            # Build prompt with priority order
+            # Start with essentials
+            prompt_parts = [core_scene, character, style]
+            current_prompt = ", ".join(prompt_parts)
 
-        # Final token check - if still too long, truncate intelligently
-        # Rough estimate: 1 token ≈ 4 characters
-        max_chars = 77 * 4  # ~308 characters for safety
-        if len(enhanced_prompt) > max_chars:
-            # Keep first part (most important) and add style at end
-            enhanced_prompt = enhanced_prompt[:max_chars-30] + ", storybook art, detailed"
+            # Add optional parts if they fit
+            for optional_part in [shot, setting_brief, quality]:
+                test_prompt = current_prompt + ", " + optional_part
+                token_count = self._count_tokens(test_prompt)
+
+                if token_count <= self.MAX_TOKENS:
+                    current_prompt = test_prompt
+                else:
+                    # If we can't add more, stop here
+                    break
+
+        # Clean up the prompt
+        enhanced_prompt = self._clean_prompt(current_prompt)
+
+        # Final safety check - truncate if still over limit
+        final_token_count = self._count_tokens(enhanced_prompt)
+        if final_token_count > self.MAX_TOKENS:
+            print(f"⚠️  Prompt has {final_token_count} tokens, truncating to {self.MAX_TOKENS} tokens")
+            enhanced_prompt = self._truncate_to_token_limit(enhanced_prompt, self.MAX_TOKENS)
+            # Re-clean after truncation
+            enhanced_prompt = self._clean_prompt(enhanced_prompt)
+            print(f"✓ Truncated prompt: {enhanced_prompt}")
 
         return enhanced_prompt
+
+    def _is_non_english(self, text: str) -> bool:
+        """
+        Detect if text contains non-English characters (Cyrillic, etc.)
+
+        Args:
+            text: Text to check
+
+        Returns:
+            True if text contains non-English characters
+        """
+        # Check for Cyrillic characters (Kazakh, Russian, etc.)
+        cyrillic_chars = sum(1 for c in text if '\u0400' <= c <= '\u04FF')
+        return cyrillic_chars > len(text) * 0.3  # If 30%+ Cyrillic, treat as non-English
+
+    def _translate_to_english_description(self, description: str) -> str:
+        """
+        Extract visual concepts from non-English description
+        Use simple English keywords that SDXL understands well
+
+        Args:
+            description: Original description (any language)
+
+        Returns:
+            Simple English visual description
+        """
+        # Common Kazakh story elements mapped to English
+        keywords = {
+            'жәрмеңке': 'marketplace',
+            'базар': 'market',
+            'ауыл': 'village',
+            'дала': 'steppe',
+            'шапан': 'robe',
+            'тымақ': 'hat',
+            'бай': 'rich man',
+            'қой': 'sheep',
+            'ат': 'horse',
+            'киіз үй': 'yurt',
+            'көше': 'street',
+            'адам': 'person',
+            'адамдар': 'people',
+        }
+
+        # Extract English keywords from description
+        english_parts = []
+        description_lower = description.lower()
+
+        for kazakh, english in keywords.items():
+            if kazakh in description_lower:
+                english_parts.append(english)
+
+        # If we found keywords, use them
+        if english_parts:
+            # Limit to first 3 keywords to stay under token limit
+            return ", ".join(english_parts[:3])
+
+        # Fallback: generic scene
+        return "Kazakh folk scene"
+
+    def _simplify_description(self, description: str) -> str:
+        """
+        Simplify a long description to essential visual elements
+
+        Args:
+            description: Original description
+
+        Returns:
+            Simplified description
+        """
+        # Remove filler words and keep key visual elements
+        filler_words = ['the', 'a', 'an', 'is', 'are', 'was', 'were', 'has', 'have', 'had']
+
+        # Split into words
+        words = description.split()
+
+        # If description is already short, return as is
+        if len(words) <= 15:
+            return description
+
+        # Keep first 15 words (usually contains the core action/scene)
+        simplified = ' '.join(words[:15])
+
+        return simplified
+
+    def _simplify_setting(self, setting: str) -> str:
+        """
+        Simplify setting to just the location (remove time of day)
+
+        Args:
+            setting: Full setting description
+
+        Returns:
+            Simplified setting
+        """
+        # Remove time indicators
+        setting_parts = setting.split(' at ')
+        location = setting_parts[0]
+
+        # Further simplify if needed
+        location = location.replace('traditional ', '').replace('typical ', '')
+
+        return location
 
     def _clean_prompt(self, prompt: str) -> str:
         """Clean and optimize the prompt string"""
