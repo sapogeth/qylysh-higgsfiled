@@ -307,6 +307,8 @@ Return ONLY the JSON array. No prose, no explanations."""
     def _generate_images_local(self, frames: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Generate images using local SDXL in parallel"""
 
+        print(f"🎨 Starting LOCAL SDXL generation for {len(frames)} frames...")
+
         if self.progress_callback:
             self.progress_callback({
                 'step': 'generating_images',
@@ -317,7 +319,9 @@ Return ONLY the JSON array. No prose, no explanations."""
 
         try:
             # Generate all frames in parallel
+            print(f"📊 Calling local_generator.generate_from_frames()...")
             frames_with_images = self.local_generator.generate_from_frames(frames)
+            print(f"✅ Local generation completed successfully!")
 
             # Validate quality and regenerate if needed
             if self.quality_validator and config.ENABLE_QUALITY_VALIDATION:
@@ -327,6 +331,8 @@ Return ONLY the JSON array. No prose, no explanations."""
 
         except Exception as e:
             print(f"❌ Local generation failed: {e}")
+            import traceback
+            traceback.print_exc()
             print("   Falling back to DALL-E...")
             return self._generate_images_dalle(frames)
 
@@ -399,39 +405,191 @@ Return ONLY the JSON array. No prose, no explanations."""
         return frames_with_images
 
     def _build_image_prompt(self, frame: Dict[str, Any]) -> str:
-        """Build image prompt from frame description - optimized for both DALL-E and SDXL"""
-        
+        """Build DETAILED image prompt from frame description"""
+
         # Import config for consistency
         import config as _cfg
-        
-        # Core visual description (keep concise)
+
+        # Core visual description
         description = frame['description']
         setting = frame['setting']
         shot_type = frame['shot_type']
-        
-        # Essential character traits (shortened)
+        key_objects = frame.get('key_objects', [])
+
+        # Essential character traits
         traits = _cfg.CHARACTER_TRAITS
         character = (
-            f"Aldar Köse, {traits['eye_color']} eyes, {traits['hair']}, "
-            f"{traits['facial_hair']}, wearing {traits['clothing']}"
+            f"Aldar Köse, {traits['face_shape']}, {traits['eye_color']}, "
+            f"{traits['hair']}, {traits['facial_hair']}, wearing {traits['clothing']} and {traits['hat']}"
         )
-        
+
+        # 🎯 DETAILED ACTION: Make it very specific!
+        action_detail = self._enhance_action_description(description, shot_type)
+
+        # 🎯 DETAILED SETTING: Make environment clear
+        setting_detail = self._enhance_setting_description(setting, key_objects)
+
         # Compact style description
         style = (
-            "2D cel-shaded anime style, smooth outlines, flat colors, "
-            "soft shadows, warm palette, Kazakh folk art"
+            "2D cel-shaded anime style, smooth clean outlines, flat colors, "
+            "soft ambient shadows, warm earthy palette, Kazakh folk art, storyboard illustration"
         )
-        
-        # Build prompt efficiently
+
+        # Build DETAILED prompt with clear composition
         prompt = (
-            f"{character}. "
-            f"{description}. "
-            f"Setting: {setting}. "
-            f"Shot: {shot_type}. "
-            f"{style}"
+            f"{action_detail}, "
+            f"featuring {character}. "
+            f"{setting_detail}. "
+            f"Camera angle: {shot_type}. "
+            f"Art style: {style}"
         )
         
         return prompt
+
+    def _enhance_action_description(self, description: str, shot_type: str) -> str:
+        """
+        Enhance action description to be more visual and cinematically specific.
+        Ensures actions are clearly depicted, not just character portraits.
+        """
+        description_lower = description.lower()
+
+        # RIDING/MOVEMENT actions
+        if any(word in description_lower for word in ['riding', 'мініп', 'есек', 'donkey', 'horse', 'at']):
+            return (
+                f"Dynamic full body shot showing Aldar Köse actively riding a small brown donkey, "
+                f"seated on the donkey's back with motion and movement clearly visible, "
+                f"traveling across the landscape"
+            )
+
+        # TALKING/CONVERSATION actions
+        if any(word in description_lower for word in ['talking', 'speaking', 'айтып', 'сөйлес', 'conversation']):
+            return (
+                f"Medium shot showing Aldar Köse engaged in animated conversation, "
+                f"gesturing expressively with hands, interacting with others, "
+                f"facial expressions showing engagement"
+            )
+
+        # LAUGHING/CELEBRATING actions
+        if any(word in description_lower for word in ['laughing', 'celebrating', 'күлкі', 'смех']):
+            return (
+                f"Joyful scene showing Aldar Köse laughing heartily, "
+                f"body language expressing happiness and mirth, "
+                f"interacting warmly with surrounding people"
+            )
+
+        # TRICKING/OUTSMARTING actions
+        if any(word in description_lower for word in ['trick', 'outsmart', 'алдау', 'clever']):
+            return (
+                f"Clever composition showing Aldar Köse executing a cunning plan, "
+                f"sly expression and knowing smile, dynamic pose showing action, "
+                f"visual storytelling of the trickster moment"
+            )
+
+        # WALKING/TRAVELING actions
+        if any(word in description_lower for word in ['walking', 'traveling', 'journey', 'жүру', 'саяхат']):
+            return (
+                f"Full body shot of Aldar Köse actively walking/traveling, "
+                f"showing movement and progression through the environment, "
+                f"dynamic pose with clear sense of motion"
+            )
+
+        # MARKETPLACE/BAZAAR scenes
+        if any(word in description_lower for word in ['market', 'bazaar', 'базар', 'trade']):
+            return (
+                f"Busy marketplace scene with Aldar Köse in the center of activity, "
+                f"interacting with merchants and goods, vibrant market atmosphere, "
+                f"showing action and interaction, not just standing"
+            )
+
+        # CAMPFIRE/STORYTELLING scenes
+        if any(word in description_lower for word in ['campfire', 'fire', 'от', 'storytelling']):
+            return (
+                f"Warm campfire scene showing Aldar Köse actively telling stories, "
+                f"animated gestures and expressions, gathered audience listening, "
+                f"firelight illuminating the scene"
+            )
+
+        # DEFAULT: Make it dynamic and action-focused
+        return (
+            f"Dynamic scene showing Aldar Köse in action: {description}, "
+            f"clear body language and movement, active pose showing what is happening, "
+            f"not just a portrait"
+        )
+
+    def _enhance_setting_description(self, setting: str, key_objects: list) -> str:
+        """
+        Enhance environment/setting description to be more vivid and specific.
+        Adds atmospheric details and composition guidance.
+        """
+        setting_lower = setting.lower()
+
+        # STEPPE/GRASSLAND settings
+        if any(word in setting_lower for word in ['steppe', 'дала', 'grassland', 'prairie']):
+            objects_str = ', '.join(key_objects) if key_objects else 'rolling hills, scattered yurts'
+            return (
+                f"Set in vast golden steppe landscape with endless horizons, "
+                f"{objects_str} visible in the scene, "
+                f"distant mountains on the horizon, clear blue sky, "
+                f"traditional Kazakh environment"
+            )
+
+        # PALACE/KHAN settings
+        if any(word in setting_lower for word in ['palace', 'khan', 'сарай', 'орда']):
+            objects_str = ', '.join(key_objects) if key_objects else 'ornate decorations, throne, pillars'
+            return (
+                f"Inside an opulent palace interior with rich decorations, "
+                f"{objects_str} prominently featured, "
+                f"intricate patterns and Kazakh architectural details, "
+                f"atmosphere of wealth and power"
+            )
+
+        # VILLAGE/SETTLEMENT settings
+        if any(word in setting_lower for word in ['village', 'settlement', 'ауыл', 'yurt']):
+            objects_str = ', '.join(key_objects) if key_objects else 'traditional yurts, people, livestock'
+            return (
+                f"Traditional Kazakh village setting with {objects_str}, "
+                f"white felt yurts clustered together, communal atmosphere, "
+                f"people and daily life activities visible, "
+                f"warm community environment"
+            )
+
+        # MARKETPLACE/BAZAAR settings
+        if any(word in setting_lower for word in ['market', 'bazaar', 'базар']):
+            objects_str = ', '.join(key_objects) if key_objects else 'colorful stalls, goods, merchants'
+            return (
+                f"Bustling marketplace filled with activity, "
+                f"{objects_str} creating a vibrant scene, "
+                f"colorful fabrics, food displays, busy atmosphere, "
+                f"traditional Central Asian bazaar"
+            )
+
+        # MOUNTAIN/HIGHLAND settings
+        if any(word in setting_lower for word in ['mountain', 'тау', 'highland']):
+            objects_str = ', '.join(key_objects) if key_objects else 'rocky peaks, winding paths'
+            return (
+                f"Dramatic mountain landscape with {objects_str}, "
+                f"steep terrain and majestic peaks, "
+                f"crisp mountain air atmosphere, "
+                f"natural beauty of Kazakh highlands"
+            )
+
+        # RIVER/WATER settings
+        if any(word in setting_lower for word in ['river', 'өзен', 'water', 'lake']):
+            objects_str = ', '.join(key_objects) if key_objects else 'flowing water, riverbanks'
+            return (
+                f"Scenic waterside location with {objects_str}, "
+                f"clear flowing water reflecting the sky, "
+                f"natural riverside environment, "
+                f"peaceful water setting"
+            )
+
+        # DEFAULT: Enhance with atmospheric details
+        objects_str = ', '.join(key_objects) if key_objects else 'environmental details'
+        return (
+            f"Scene set in {setting} with {objects_str} visible, "
+            f"clear environmental context and atmosphere, "
+            f"detailed background establishing the location"
+        )
 
     def _generate_single_image(self, prompt: str, frame_number: int) -> str:
         """Generate a single image using DALL-E 3"""

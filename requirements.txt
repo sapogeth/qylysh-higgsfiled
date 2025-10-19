@@ -3,6 +3,7 @@ openai>=2.5.0
 python-dotenv>=1.0.0
 requests>=2.31.0
 pillow>=10.0.0
+reportlab>=4.0.0
 
 # Optional: For Colab integration
 flask-cors>=4.0.0

@@ -9,6 +9,7 @@ const outputSection = document.getElementById('outputSection');
 const storyText = document.getElementById('storyText');
 const framesContainer = document.getElementById('framesContainer');
 const downloadBtn = document.getElementById('downloadBtn');
+const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 const newStoryBtn = document.getElementById('newStoryBtn');
 
 // State
@@ -18,6 +19,7 @@ let currentStoryboard = null;
 generateBtn.addEventListener('click', generateStoryboardStream);
 newStoryBtn.addEventListener('click', resetForm);
 downloadBtn.addEventListener('click', downloadAllImages);
+downloadPdfBtn.addEventListener('click', downloadPDF);
 
 // Allow Enter key to submit (with Shift+Enter for new line)
 promptInput.addEventListener('keydown', (e) => {
@@ -264,6 +266,61 @@ function createFrameCard(frame, frameNumber) {
 }
 
 // Download all images
+async function downloadPDF() {
+    if (!currentStoryboard || !currentStoryboard.storyboard) {
+        showError('No storyboard to download');
+        return;
+    }
+
+    showLoading();
+    updateLoadingText('Создание PDF в стиле визуальной новеллы...');
+
+    try {
+        // Prepare storyboard data with absolute image paths
+        const storyboardData = {
+            storyboard: currentStoryboard.storyboard.map(frame => ({
+                ...frame,
+                // Convert image_url to absolute path for PDF generator
+                image_path: frame.image_url ? frame.image_url.replace('/static/generated/', 'static/generated/') : null
+            })),
+            metadata: currentStoryboard.metadata || {}
+        };
+
+        // Send to backend for PDF generation
+        const response = await fetch('/api/export/pdf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(storyboardData)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || 'PDF generation failed');
+        }
+
+        // Download the PDF
+        const pdfUrl = result.pdf_url;
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        link.download = result.filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Success message
+        alert('✅ PDF создан успешно! Проверьте папку загрузок.');
+
+    } catch (error) {
+        console.error('PDF download error:', error);
+        showError(`Failed to generate PDF: ${error.message}`);
+    } finally {
+        hideLoading();
+    }
+}
+
 async function downloadAllImages() {
     if (!currentStoryboard || !currentStoryboard.storyboard) {
         showError('No storyboard to download');
@@ -340,6 +397,13 @@ function showLoading() {
 
 function hideLoading() {
     loadingOverlay.style.display = 'none';
+}
+
+function updateLoadingText(text) {
+    const loadingText = loadingOverlay.querySelector('p');
+    if (loadingText) {
+        loadingText.textContent = text;
+    }
 }
 
 function disableButton(button) {

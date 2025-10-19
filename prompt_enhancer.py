@@ -150,16 +150,20 @@ class PromptEnhancer:
             # Translate key elements to English for SDXL
             core_scene = self._translate_to_english_description(description)
             ct = config.CHARACTER_TRAITS
+            # Include ALL facial features for consistency (MOST IMPORTANT - listed first!)
             character = (
-                f"Aldar Kose, {ct['eye_color']} eyes, {ct['hair']}, {ct['facial_hair']}, "
+                f"Aldar Kose, {ct['face_shape']}, {ct['eye_shape']}, {ct['eye_color']}, "
+                f"{ct['hair_length']}, {ct['hair']}, {ct['facial_hair']}, {ct['eyebrows']}, {ct['skin_tone']}, "
                 f"wearing {ct['clothing']} and {ct['hat']}"
             )
             style = (
-                "2D cel-shaded anime-style, smooth clean outlines, flat colors, soft shadows, warm palette, Kazakh folk art"
+                "2D cel-shaded anime-style, smooth clean outlines, flat colors, soft shadows, warm palette, Kazakh folk art, "
+                "full scene composition, no white borders, same face every frame, professional quality"
             )
 
             # Very concise for non-English, but still enforce consistency
-            prompt_parts = [core_scene, character, style, config.STYLE_LOCK]
+            # CHARACTER FIRST for face consistency!
+            prompt_parts = [character, core_scene, style, config.STYLE_LOCK]
             current_prompt = ", ".join(prompt_parts)
         else:
             # English text - use full enhancement
@@ -167,16 +171,18 @@ class PromptEnhancer:
             core_scene = self._simplify_description(description)
 
             # 2. ESSENTIAL: Character identification (compact)
-            # Inject consistent character traits
+            # Inject consistent character traits - ALL facial features (MOST IMPORTANT - listed first!)
             ct = config.CHARACTER_TRAITS
             character = (
-                f"Aldar Kose, {ct['eye_color']} eyes, {ct['hair']}, {ct['facial_hair']}, "
+                f"Aldar Kose, {ct['face_shape']}, {ct['eye_shape']}, {ct['eye_color']}, "
+                f"{ct['hair_length']}, {ct['hair']}, {ct['facial_hair']}, {ct['eyebrows']}, {ct['skin_tone']}, "
                 f"wearing {ct['clothing']} and {ct['hat']}"
             )
 
-            # 3. ESSENTIAL: Visual style (compact)
+            # 3. ESSENTIAL: Visual style (compact but STRONG)
             style = (
-                "2D cel-shaded anime-style, smooth clean outlines, flat colors, soft shadows, warm palette, Kazakh folk art"
+                "2D cel-shaded anime-style, smooth clean outlines, flat colors, soft shadows, warm palette, Kazakh folk art, "
+                "full scene composition, no white borders, same face every frame, professional quality"
             )
 
             # 4. OPTIONAL: Shot type (if space allows)
@@ -190,8 +196,8 @@ class PromptEnhancer:
             quality = f"masterpiece, clean lines, {config.STYLE_LOCK}"
 
             # Build prompt with priority order
-            # Start with essentials
-            prompt_parts = [core_scene, character, style]
+            # Start with essentials - CHARACTER FIRST for face consistency!
+            prompt_parts = [character, core_scene, style]
             current_prompt = ", ".join(prompt_parts)
 
             # Add optional parts if they fit

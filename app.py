@@ -3,12 +3,13 @@ Aldar Köse Storyboard Generator - Web Application
 Generates visual storyboards from any user prompt, automatically featuring the Kazakh legend Aldar Köse
 """
 
-from flask import Flask, render_template, request, jsonify, send_from_directory, Response
+from flask import Flask, render_template, request, jsonify, send_from_directory, Response, send_file
 import os
 import json
 from datetime import datetime
 import config
 from storyboard_generator import StoryboardGenerator
+from pdf_exporter import export_to_pdf
 import config
 
 app = Flask(__name__)
@@ -17,6 +18,7 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 
 # Ensure output directories exist
 os.makedirs('static/generated', exist_ok=True)
+os.makedirs('static/exports', exist_ok=True)
 os.makedirs('static/css', exist_ok=True)
 os.makedirs('static/js', exist_ok=True)
 os.makedirs('templates', exist_ok=True)
@@ -214,6 +216,48 @@ def serve_generated_image(filename):
 def favicon():
     """Serve favicon"""
     return send_from_directory('static', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+
+@app.route('/api/export/pdf', methods=['POST'])
+def export_pdf():
+    """
+    Export storyboard to PDF
+    Expects JSON with complete storyboard data
+    """
+    try:
+        data = request.get_json()
+
+        if not data or 'storyboard' not in data:
+            return jsonify({'error': 'Invalid storyboard data'}), 400
+
+        # Generate PDF
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_filename = f'aldar_kose_storyboard_{timestamp}.pdf'
+        output_path = os.path.join('static/exports', output_filename)
+
+        # Export to PDF
+        pdf_path = export_to_pdf(data, output_path)
+
+        return jsonify({
+            'success': True,
+            'pdf_url': f'/static/exports/{output_filename}',
+            'filename': output_filename
+        })
+
+    except Exception as e:
+        print(f"PDF export error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/static/exports/<path:filename>')
+def serve_exported_pdf(filename):
+    """Serve exported PDF files"""
+    return send_from_directory('static/exports', filename)
 
 
 if __name__ == '__main__':

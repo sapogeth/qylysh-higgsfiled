@@ -264,6 +264,7 @@ header h1 {
     font-weight: 600;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
+    margin: 5px;
 }
 
 .action-btn:hover {
@@ -271,8 +272,23 @@ header h1 {
     box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
 }
 
-.action-btn.secondary {
+.action-btn.primary {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    font-size: 17px;
+    padding: 18px 35px;
+}
+
+.action-btn.primary:hover {
+    box-shadow: 0 10px 30px rgba(240, 147, 251, 0.5);
+}
+
+.action-btn.secondary {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    color: #333;
+}
+
+.action-btn.secondary:hover {
+    box-shadow: 0 10px 30px rgba(168, 237, 234, 0.4);
 }
 
 /* Loading Overlay */

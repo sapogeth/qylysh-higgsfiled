@@ -87,12 +87,14 @@ class LocalImageGenerator:
         self._log_progress("Loading Stable Diffusion XL model...", 0, 100)
 
         try:
-            # Load SDXL pipeline
+            # Load SDXL pipeline with SPEED OPTIMIZATIONS
             self.pipe = StableDiffusionXLPipeline.from_pretrained(
                 config.SDXL_MODEL_ID,
                 torch_dtype=self.dtype,
                 use_safetensors=True,
-                variant="fp16" if self.dtype == torch.float16 else None
+                variant="fp16" if self.dtype == torch.float16 else None,
+                low_cpu_mem_usage=True,  # 🚀 Faster loading
+                device_map=None,  # 🚀 Manual device placement
             )
 
             # Choose optimal scheduler based on config
@@ -147,6 +149,34 @@ class LocalImageGenerator:
             if config.ENABLE_VAE_TILING:
                 self.pipe.enable_vae_tiling()
                 self._log_progress("✓ Enabled VAE tiling", 70, 100)
+
+            # 🚀 ULTRA FAST: Memory layout optimization for M1
+            if hasattr(config, 'ENABLE_CHANNELS_LAST') and config.ENABLE_CHANNELS_LAST:
+                try:
+                    # Convert UNet to channels_last memory format (faster on M1)
+                    if hasattr(self.pipe, 'unet'):
+                        self.pipe.unet = self.pipe.unet.to(memory_format=torch.channels_last)
+                        self._log_progress("✓ UNet channels_last enabled (M1 optimized)", 72, 100)
+                except Exception as e:
+                    self._log_progress(f"⚠ Channels_last failed: {e}", 72, 100)
+
+            # SPEED OPTIMIZATIONS
+            if config.SKIP_SAFETY_CHECKER:
+                # Disable safety checker for faster generation
+                self.pipe.safety_checker = None
+                self._log_progress("✓ Safety checker disabled (faster generation)", 75, 100)
+
+            # 🚀 ULTRA FAST: Enable CPU offload to save MPS memory
+            if config.ENABLE_MODEL_CPU_OFFLOAD:
+                try:
+                    self.pipe.enable_model_cpu_offload()
+                    self._log_progress("✓ CPU offload enabled (saves ~3GB MPS memory)", 77, 100)
+                except Exception as e:
+                    self._log_progress(f"⚠ CPU offload failed: {e}", 77, 100)
+
+            # Optimize for speed
+            if hasattr(self.pipe, 'set_progress_bar_config'):
+                self.pipe.set_progress_bar_config(disable=True)  # No progress bar overhead
 
             # Torch compile for M1 speed boost (PyTorch 2.0+)
             # Note: Currently disabled as torch.compile is not stable on MPS
@@ -258,6 +288,13 @@ class LocalImageGenerator:
             generator = None
 
         # Generate image
+        # Note: autocast disabled for MPS compatibility
+
+        # 🚀 CODE OPTIMIZATION: Add progress callback
+        import time
+        start_time = time.time()
+        print(f"🎨 Starting generation ({num_inference_steps} steps, {config.IMAGE_WIDTH}x{config.IMAGE_HEIGHT})...")
+
         with torch.no_grad():
             if ref_image is not None:
                 # Ensure IP-Adapter is ready
@@ -274,6 +311,8 @@ class LocalImageGenerator:
                         width=config.IMAGE_WIDTH,
                         image=ref_image,
                         ip_adapter_scale=scale,
+                        callback=lambda step, timestep, latents: print(f"  Step {step+1}/{num_inference_steps}...", end='\r') if step % 2 == 0 else None,
+                        callback_steps=1,
                     )
                 except TypeError:
                     # Fallback if older diffusers signature; omit ip_adapter_scale
@@ -296,9 +335,24 @@ class LocalImageGenerator:
                     generator=generator,
                     height=config.IMAGE_HEIGHT,
                     width=config.IMAGE_WIDTH,
+                    callback=lambda step, timestep, latents: print(f"  Step {step+1}/{num_inference_steps}...", end='\r') if step % 2 == 0 else None,
+                    callback_steps=1,
                 )
 
-        return result.images[0]
+        image = result.images[0]
+
+        # 🚀 CODE OPTIMIZATION: Show generation time
+        elapsed = time.time() - start_time
+        print(f"\n✅ Generated in {elapsed:.2f} seconds ({elapsed/num_inference_steps:.2f}s per step)")
+
+        # 🚀 ULTRA FAST: Aggressive memory cleanup for M1
+        del result
+        if self.device == "mps":
+            import gc
+            gc.collect()
+            torch.mps.empty_cache()
+
+        return image
 
     def generate_parallel(
         self,
