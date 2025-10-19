@@ -1,5 +1,9 @@
 # Aldar Köse Storyboard Generator
 
+**📚 New users:** Start with **[START_HERE.md](START_HERE.md)** for the quickest setup guide, or see **[DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md)** for all documentation.
+
+---
+
 Transform any idea into a visual Aldar Köse story! This web application automatically creates illustrated storyboards featuring the beloved Kazakh folk hero.
 
 ## Features
@@ -13,6 +17,8 @@ Transform any idea into a visual Aldar Köse story! This web application automat
 - **Google Colab Support**: Offload generation to free GPU for 10-20x speed boost
 
 ## Quick Start
+
+**⚡ New users:** See [START_HERE.md](START_HERE.md) for the fastest setup guide!
 
 ### 1. Installation
 

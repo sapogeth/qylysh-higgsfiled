@@ -5,7 +5,7 @@
 **Transforms ANY user prompt into an illustrated Aldar Köse storyboard automatically.**
 
 ### User Experience
-1. User visits website at http://localhost:5000
+1. User visits website at http://localhost:8080
 2. User enters ANY story idea (in English, Kazakh, or Russian)
 3. System automatically creates an Aldar Köse story from that idea
 4. AI generates 6-10 illustrated storyboard frames
@@ -311,7 +311,7 @@ python test_api.py
 
 ### Access
 ```
-http://localhost:5000
+http://localhost:8080
 ```
 
 ---
@@ -382,7 +382,7 @@ Easy to add:
 
 ### Basic Functionality
 - ✅ Server starts without errors
-- ✅ Homepage loads at http://localhost:5000
+- ✅ Homepage loads at http://localhost:8080
 - ✅ Can enter prompt and click generate
 - ✅ Loading overlay appears
 - ✅ Storyboard displays after generation
@@ -472,4 +472,4 @@ All core features implemented:
 ./run.sh
 ```
 
-Visit http://localhost:5000 and enter any prompt!
+Visit http://localhost:8080 and enter any prompt!

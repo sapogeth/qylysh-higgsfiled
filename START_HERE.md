@@ -34,7 +34,7 @@ Get a key from: https://platform.openai.com/api-keys
 python app.py
 ```
 
-Then open: **http://localhost:5000**
+Then open: **http://localhost:8080**
 
 ---
 
@@ -59,7 +59,7 @@ Then open: **http://localhost:5000**
                  ⬇️
 ┌─────────────────────────────────────────┐
 │  IMAGE GENERATION                       │
-│  DALL-E 3 creates beautiful images      │
+│  LoRA creates beautiful images          │
 └─────────────────────────────────────────┘
                  ⬇️
 ┌─────────────────────────────────────────┐
@@ -100,11 +100,13 @@ Then open: **http://localhost:5000**
 
 | File | What's Inside | When to Read |
 |------|--------------|--------------|
-| **[QUICK_START.md](QUICK_START.md)** | 3-step setup | Read first! |
-| **[README.md](README.md)** | Main documentation | For overview |
-| **[SETUP_GUIDE.md](SETUP_GUIDE.md)** | Detailed guide | For deep dive |
-| **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** | Technical details | For developers |
-| **THIS FILE** | Quick orientation | You are here! |
+| **THIS FILE** | Quick orientation & 5-min setup | **👈 START HERE** |
+| **[README.md](README.md)** | Project overview & features | For overview |
+| **[SETUP_GUIDE.md](SETUP_GUIDE.md)** | Detailed installation guide | For deep dive |
+| **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** | Common issues & solutions | When stuck |
+| **[GOOGLE_COLAB_GUIDE.md](GOOGLE_COLAB_GUIDE.md)** | GPU acceleration setup | For faster generation |
+| **[PDF_EXPORT_GUIDE.md](PDF_EXPORT_GUIDE.md)** | PDF export features | After first story |
+| **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** | Technical architecture | For developers |
 
 ---
 
@@ -121,6 +123,12 @@ This will:
 - ✅ Test story generation
 - ✅ Test frame generation
 - ✅ Show you a sample output
+
+**Then start the app:**
+```bash
+python app.py
+```
+Visit: **http://localhost:8080**
 
 ---
 
@@ -393,7 +401,7 @@ python app.py
 
 ### Then Visit:
 ```
-http://localhost:5000
+http://localhost:8080
 ```
 
 ### Try This Prompt:
@@ -419,8 +427,8 @@ A greedy merchant learns about generosity
 
 | URL | Page |
 |-----|------|
-| http://localhost:5000 | Main app |
-| http://localhost:5000/api/health | Health check |
+| http://localhost:8080 | Main app |
+| http://localhost:8080/api/health | Health check |
 
 ---
 

@@ -60,7 +60,7 @@ python app.py
 
 ### 5. Open in Browser
 
-Visit: **http://localhost:5000**
+Visit: **http://localhost:8080**
 
 ## How to Use
 
@@ -351,13 +351,13 @@ model="dall-e-3"  # Change to "dall-e-2" for cost savings
 ### Local Development
 ```bash
 python app.py
-# Runs on http://localhost:5000
+# Runs on http://localhost:8080
 ```
 
 ### Production (with Gunicorn)
 ```bash
 pip install gunicorn
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
+gunicorn -w 4 -b 0.0.0.0:8080 app:app
 ```
 
 ### Docker (Optional)
@@ -399,4 +399,4 @@ Built with respect for Kazakh culture and traditions.
 ./run.sh
 ```
 
-Visit http://localhost:5000 and create your first Aldar Köse storyboard!
+Visit http://localhost:8080 and create your first Aldar Köse storyboard!
