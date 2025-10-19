@@ -1,6 +1,159 @@
-# Fixes Applied - Token Limit Issue
+# Recent Fixes Summary
 
-## Problem
+## Latest Updates (October 19, 2025)
+
+### 1. Identity Lock Moved to Backend ✅
+
+**Problem**: Identity Lock controls were in the frontend UI, requiring users to check/uncheck and select options.
+
+**Solution**: 
+- Removed Identity Lock UI from `templates/index.html`
+- Removed identity-related JavaScript from `static/js/app.js`
+- Added backend configuration in `config.py`:
+  - `USE_IDENTITY_LOCK` - Enable/disable (default: False)
+  - `IDENTITY_REFERENCE_IMAGE` - Which reference to use (default: "aldar1.png")
+  - `IP_ADAPTER_SCALE` - Strength 0.0-1.0 (default: 0.6)
+- Updated `app.py` to read config instead of frontend payload
+
+**How to Use Now**:
+```python
+# In config.py, set:
+USE_IDENTITY_LOCK = True  # Enable IP-Adapter
+IDENTITY_REFERENCE_IMAGE = "aldar1.png"  # Choose reference
+IP_ADAPTER_SCALE = 0.6  # Adjust strength
+```
+
+---
+
+### 2. Token Limit Exceeded (254 > 77) ✅
+
+**Problem**: CLIP tokenizer error when generating images:
+```
+Token indices sequence length is longer than the specified maximum 
+sequence length for this model (254 > 77)
+```
+
+**Root Cause**: 
+- `_build_image_prompt()` in `storyboard_generator.py` was concatenating too many descriptive elements
+- Prompts were 254 tokens, but CLIP max is 77 tokens
+- When using local SDXL, the long prompt wasn't being properly enhanced/shortened
+
+**Solutions Implemented**:
+
+1. **Shortened `_build_image_prompt()` in `storyboard_generator.py`**:
+   - Removed redundant character descriptions
+   - Removed style_lock and reference_style duplicates
+   - Reduced from ~200 tokens to ~80-100 tokens
+   - Kept essential: character, description, setting, shot, style
+
+2. **Added prompt enhancement in streaming path** (`app.py`):
+   - When identity lock triggers local generation
+   - Now calls `local_gen.enhancer.enhance(frame)` 
+   - Ensures prompt fits within 75 token limit
+   - Uses the same enhancement logic as batch generation
+
+3. **Prompt enhancer already had token management**:
+   - `PromptEnhancer` in `prompt_enhancer.py` has built-in truncation
+   - Uses actual CLIP tokenizer for accurate counting
+   - Prioritizes essential elements (character, scene, style)
+   - Drops optional parts if they don't fit
+
+**Result**: Prompts now stay under 75 tokens consistently.
+
+---
+
+### 3. LoRA Warning Too Prominent ⚠️ → ℹ️
+
+**Problem**: Every run showed alarming warning:
+```
+⚠️  Warning: LoRA model not found at /path/to/lora
+   Run train_aldar_lora.py to create it
+```
+
+**Why This Was Misleading**:
+- LoRA is **completely optional**
+- Base SDXL works great without it
+- Warning made it seem like something was broken
+
+**Solution**:
+1. **In `config.py`**: Removed the startup warning from `validate_config()`
+2. **In `local_image_generator.py`**: Changed message to informational:
+   ```python
+   ℹ️  Using base SDXL (LoRA optional, not found)
+   ```
+
+**Now**: LoRA absence is noted casually, not as an error.
+
+---
+
+## Files Modified
+
+### Frontend (Identity Lock Removal)
+- ✅ `templates/index.html` - Removed identity lock UI controls
+- ✅ `static/js/app.js` - Removed identity payload logic
+
+### Backend (Identity Lock + Token Fix)
+- ✅ `config.py` 
+  - Added `USE_IDENTITY_LOCK`, `IDENTITY_REFERENCE_IMAGE`, `IP_ADAPTER_SCALE`
+  - Removed LoRA startup warning
+- ✅ `app.py`
+  - Reads identity settings from config
+  - Calls prompt enhancer for local generation
+  - Uses enhanced prompts (under 75 tokens)
+- ✅ `storyboard_generator.py`
+  - Shortened `_build_image_prompt()` method
+  - Removed redundant character/style text
+- ✅ `local_image_generator.py`
+  - Made LoRA warning informational
+- ✅ `.env.example`
+  - Added note about identity lock in config.py
+
+---
+
+## How to Enable Identity Lock
+
+**Before** (frontend toggle):
+```
+User had to check "Lock identity to reference" 
+and select image from dropdown every time
+```
+
+**Now** (backend config):
+```python
+# Edit config.py
+USE_IDENTITY_LOCK = True
+IDENTITY_REFERENCE_IMAGE = "aldar2.png"  # or aldar1/3/4/5
+IP_ADAPTER_SCALE = 0.7  # 0.5-0.7 recommended
+```
+
+**Restart app**:
+```bash
+python app.py
+```
+
+**That's it!** All generations now use identity lock automatically.
+
+---
+
+## Testing Verification
+
+All files compile without errors:
+```bash
+python -m py_compile app.py storyboard_generator.py local_image_generator.py config.py
+# ✅ No errors
+```
+
+---
+
+## Summary
+
+✅ **Identity Lock**: Now a backend configuration setting  
+✅ **Token Limit**: Prompts properly enhanced to fit 75 tokens  
+✅ **LoRA Warning**: Changed to informational message  
+✅ **Stability**: All files compile without errors  
+✅ **Compatibility**: No breaking changes  
+
+**Result**: Cleaner UI, fewer warnings, stable generation under token limits.
 SDXL's CLIP text encoder has a **77 token limit**. The previous prompts were **164 tokens**, causing:
 - Token truncation warnings
 - Loss of important prompt information

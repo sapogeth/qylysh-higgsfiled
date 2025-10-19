@@ -7,6 +7,7 @@ from flask import Flask, render_template, request, jsonify, send_from_directory,
 import os
 import json
 from datetime import datetime
+import config
 from storyboard_generator import StoryboardGenerator
 import config
 
