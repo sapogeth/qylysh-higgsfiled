@@ -4,6 +4,9 @@ python-dotenv>=1.0.0
 requests>=2.31.0
 pillow>=10.0.0
 
+# Optional: For Colab integration
+flask-cors>=4.0.0
+
 # Image Generation - Stable Diffusion XL with LoRA
 torch>=2.0.0
 torchvision>=0.15.0

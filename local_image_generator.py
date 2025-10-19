@@ -1,6 +1,7 @@
 """
 Local Image Generator using Stable Diffusion XL
 Optimized for M1 MacBook Air with character consistency for Aldar Köse
+Supports remote generation via Google Colab
 """
 
 import torch
@@ -15,8 +16,16 @@ import time
 from typing import List, Dict, Any, Optional, Callable
 from pathlib import Path
 from datetime import datetime
+import os
 import config
 from prompt_enhancer import PromptEnhancer
+
+# Try to import Colab client (optional)
+try:
+    from colab_client import ColabClient
+    COLAB_AVAILABLE = True
+except ImportError:
+    COLAB_AVAILABLE = False
 
 
 class LocalImageGenerator:
@@ -38,15 +47,28 @@ class LocalImageGenerator:
         self.device = config.get_device()
         self.dtype = config.get_dtype()
         self.ip_adapter_loaded = False
+        
+        # Colab client (if configured)
+        self.colab_client = None
+        if COLAB_AVAILABLE and os.getenv('COLAB_API_URL'):
+            try:
+                self.colab_client = ColabClient()
+                print("✓ Colab GPU backend available")
+            except Exception as e:
+                print(f"⚠️  Colab connection failed: {e}")
+                print("   Will use local generation instead")
 
         # Determine if we should lazy load
         self.lazy_load = lazy_load if lazy_load is not None else config.LAZY_LOAD_MODEL
 
-        # Load model immediately if not lazy loading
-        if not self.lazy_load:
+        # Load model immediately if not lazy loading and no Colab
+        if not self.lazy_load and not self.colab_client:
             self._load_model()
         else:
-            print("✓ Image generator initialized (model will load on first request)")
+            if self.colab_client:
+                print("✓ Using Colab GPU for generation")
+            else:
+                print("✓ Image generator initialized (model will load on first request)")
 
     def _log_progress(self, message: str, step: int = 0, total: int = 100):
         """Log progress message and call callback if provided"""
@@ -144,7 +166,8 @@ class LocalImageGenerator:
                 except Exception as e:
                     self._log_progress(f"⚠️  LoRA loading failed: {e}", 90, 100)
             else:
-                self._log_progress("⚠️  LoRA not found - will use base SDXL only", 90, 100)
+                # LoRA is optional - base SDXL still works great
+                self._log_progress("ℹ️  Using base SDXL (LoRA optional, not found)", 90, 100)
 
             self._log_progress("✓ SDXL model loaded successfully!", 100, 100)
 
@@ -198,10 +221,25 @@ class LocalImageGenerator:
             num_inference_steps: Number of denoising steps
             guidance_scale: How closely to follow the prompt
             seed: Random seed for reproducibility
+            ref_image: Optional reference image for IP-Adapter
+            ip_adapter_scale: IP-Adapter strength (0.0-1.0)
 
         Returns:
             PIL Image
         """
+        
+        # Try Colab first if available
+        if self.colab_client and self.colab_client.is_available():
+            try:
+                return self.colab_client.generate_single(
+                    prompt=prompt,
+                    negative_prompt=negative_prompt or config.NEGATIVE_PROMPT,
+                    ref_image=ref_image,
+                    ip_adapter_scale=ip_adapter_scale
+                )
+            except Exception as e:
+                print(f"⚠️  Colab generation failed: {e}")
+                print("   Falling back to local generation...")
 
         # Lazy load model if not already loaded
         if self.pipe is None:

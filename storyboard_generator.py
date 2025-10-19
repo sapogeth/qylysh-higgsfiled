@@ -399,38 +399,38 @@ Return ONLY the JSON array. No prose, no explanations."""
         return frames_with_images
 
     def _build_image_prompt(self, frame: Dict[str, Any]) -> str:
-        """Build DALL-E prompt from frame description"""
-        base_style = (
-            "2D cel-shaded anime-inspired illustration, smooth clean outlines, flat colors, "
-            "soft ambient shading, warm palette, children's storybook vibe, "
-            "Kazakh folk art influence, culturally authentic setting, no photorealism"
-        )
-
-        # Consistent character traits and style lock
+        """Build image prompt from frame description - optimized for both DALL-E and SDXL"""
+        
+        # Import config for consistency
         import config as _cfg
+        
+        # Core visual description (keep concise)
+        description = frame['description']
+        setting = frame['setting']
+        shot_type = frame['shot_type']
+        
+        # Essential character traits (shortened)
         traits = _cfg.CHARACTER_TRAITS
-        style_lock = _cfg.STYLE_LOCK
-        # Reference-anchored description (non-image; descriptive only)
-        reference_style = (
-            "Matches Aldar Köse references: orange patterned chapan with Kazakh ornaments, felt kalpak hat, "
-            "dark hair in a small topknot, small mustache, friendly clever demeanor."
+        character = (
+            f"Aldar Köse, {traits['eye_color']} eyes, {traits['hair']}, "
+            f"{traits['facial_hair']}, wearing {traits['clothing']}"
         )
-        character_lock = (
-            f"Consistent character: {traits['name']}, {traits['eye_color']} eyes, {traits['hair']}, "
-            f"{traits['facial_hair']}, wearing {traits['clothing']} and {traits['hat']}, "
-            f"expression {traits['expression']}. "
+        
+        # Compact style description
+        style = (
+            "2D cel-shaded anime style, smooth outlines, flat colors, "
+            "soft shadows, warm palette, Kazakh folk art"
         )
-
+        
+        # Build prompt efficiently
         prompt = (
-            f"{self.character_description}. "
-            f"{character_lock}"
-            f"{frame['description']}. "
-            f"Setting: {frame['setting']}. "
-            f"Shot type: {frame['shot_type']}. "
-            f"Lighting: soft, even, minimal specular highlights. "
-            f"{base_style}. {style_lock}. {reference_style}"
+            f"{character}. "
+            f"{description}. "
+            f"Setting: {setting}. "
+            f"Shot: {shot_type}. "
+            f"{style}"
         )
-
+        
         return prompt
 
     def _generate_single_image(self, prompt: str, frame_number: int) -> str:

@@ -10,11 +10,6 @@ const storyText = document.getElementById('storyText');
 const framesContainer = document.getElementById('framesContainer');
 const downloadBtn = document.getElementById('downloadBtn');
 const newStoryBtn = document.getElementById('newStoryBtn');
-const useIdentityEl = document.getElementById('useIdentity');
-const identityControls = document.getElementById('identityControls');
-const referenceImageEl = document.getElementById('referenceImage');
-const identityScaleEl = document.getElementById('identityScale');
-const identityScaleValue = document.getElementById('identityScaleValue');
 
 // State
 let currentStoryboard = null;
@@ -25,17 +20,6 @@ newStoryBtn.addEventListener('click', resetForm);
 downloadBtn.addEventListener('click', downloadAllImages);
 
 // Allow Enter key to submit (with Shift+Enter for new line)
-// Identity controls visibility and value
-if (useIdentityEl) {
-    useIdentityEl.addEventListener('change', () => {
-        identityControls.style.display = useIdentityEl.checked ? 'block' : 'none';
-    });
-}
-if (identityScaleEl) {
-    identityScaleEl.addEventListener('input', () => {
-        identityScaleValue.textContent = identityScaleEl.value;
-    });
-}
 promptInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -71,13 +55,6 @@ async function generateStoryboardStream() {
 
         // Start streaming from server
         const payload = { prompt };
-        if (useIdentityEl && useIdentityEl.checked) {
-            payload.identity = {
-                use: true,
-                reference: referenceImageEl ? referenceImageEl.value : 'aldar1.png',
-                scale: identityScaleEl ? parseFloat(identityScaleEl.value) : 0.6
-            };
-        }
 
         const response = await fetch('/api/generate/stream', {
             method: 'POST',

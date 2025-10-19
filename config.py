@@ -160,6 +160,20 @@ STYLE_LOCK = (
     "soft ambient shading, warm earthy palette, consistent line thickness across frames"
 )
 
+# ===== IDENTITY LOCK SETTINGS (IP-Adapter) =====
+
+# Enable IP-Adapter for stronger character consistency
+USE_IDENTITY_LOCK = False  # Set to True to enable IP-Adapter reference-based generation
+
+# Reference image to use for identity lock (when USE_IDENTITY_LOCK=True)
+# Options: aldar1.png, aldar2.png, aldar3.png, aldar4.png, aldar5.png
+IDENTITY_REFERENCE_IMAGE = "aldar1.png"
+
+# IP-Adapter strength (0.0-1.0)
+# Lower = more creative freedom, Higher = stronger match to reference
+# Recommended: 0.5-0.7 for balance between consistency and scene variety
+IP_ADAPTER_SCALE = 0.6
+
 # ===== API SETTINGS =====
 
 # OpenAI settings
@@ -224,10 +238,8 @@ def validate_config():
     if not OPENAI_API_KEY:
         issues.append("OPENAI_API_KEY not set in .env file")
 
-    # Check if LoRA exists (warning, not error)
-    if not LORA_PATH.exists():
-        print(f"⚠️  Warning: LoRA model not found at {LORA_PATH}")
-        print("   Run train_aldar_lora.py to create it")
+    # Note: LoRA is optional - no warning needed
+    # Base SDXL works fine without it
 
     return issues
 

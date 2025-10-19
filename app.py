@@ -75,10 +75,6 @@ def generate_storyboard_stream():
     try:
         data = request.get_json(silent=True) or {}
         user_prompt = (data.get('prompt') or '').strip()
-        identity = data.get('identity') or {}
-        use_identity = bool(identity.get('use'))
-        ref_filename = identity.get('reference') or 'aldar1.png'
-        ref_scale = identity.get('scale') or 0.6
 
         if not user_prompt:
             # Return a single-line NDJSON error
@@ -102,10 +98,11 @@ def generate_storyboard_stream():
                 }) + "\n"
 
                 # Step 3: images per-frame
-                # Prepare local generator lazily only if identity lock is requested
+                # Check if identity lock is enabled in config
                 local_gen = None
                 ref_img = None
-                if use_identity:
+                
+                if config.USE_IDENTITY_LOCK:
                     try:
                         # Try to import and initialize the local generator on-demand
                         from local_image_generator import LocalImageGenerator as _LocalGen
@@ -114,10 +111,11 @@ def generate_storyboard_stream():
 
                         # Load reference image from project root (PNG files provided)
                         from PIL import Image as _Image
-                        ref_path = os.path.join(os.getcwd(), ref_filename)
+                        ref_path = os.path.join(os.getcwd(), config.IDENTITY_REFERENCE_IMAGE)
                         if os.path.exists(ref_path):
                             try:
                                 ref_img = _Image.open(ref_path).convert('RGB')
+                                print(f"✓ Using identity lock with {config.IDENTITY_REFERENCE_IMAGE} (scale={config.IP_ADAPTER_SCALE})")
                             except Exception as _e:
                                 print(f"Failed to load reference image {ref_path}: {_e}")
                         else:
@@ -129,14 +127,23 @@ def generate_storyboard_stream():
                 for idx, frame in enumerate(frames):
                     frame_number = idx + 1
 
-                    # Prefer local generation if identity lock is requested and local generator is ready
+                    # Prefer local generation if identity lock is enabled and local generator is ready
                     if local_gen is not None:
                         # Local SDXL generation (LoRA will be applied automatically if present)
                         from datetime import datetime as _dt
+                        
+                        # Build base prompt
+                        base_prompt = generator._build_image_prompt(frame)
+                        
+                        # Enhance prompt to fit within 75 token limit
+                        # Use the enhancer to properly condense the prompt
+                        enhanced_prompt = local_gen.enhancer.enhance(frame)
+                        
+                        # Generate with enhanced prompt
                         img = local_gen.generate_single(
-                            prompt=generator._build_image_prompt(frame),
+                            prompt=enhanced_prompt,
                             ref_image=ref_img,
-                            ip_adapter_scale=ref_scale if ref_img is not None else None
+                            ip_adapter_scale=config.IP_ADAPTER_SCALE if ref_img is not None else None
                         )
 
                         # Save image
