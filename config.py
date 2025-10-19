@@ -99,13 +99,18 @@ TRAINING_CAPTION = (
 
 # Base style prompt (concise for 77 token limit)
 BASE_STYLE_PROMPT = (
-    "2D storybook art, warm colors, detailed, Kazakh folk style"
+    "2D cel-shaded, anime-inspired illustration, smooth clean outlines, flat colors, soft shadows, "
+    "warm palette, Kazakh folk style, child-friendly"
 )
 
 # Negative prompt (concise for 77 token limit)
 NEGATIVE_PROMPT = (
-    "3D, CGI, photo, modern clothes, text, watermark, "
-    "blurry, ugly, deformed, extra limbs, duplicate"
+    "3D, CGI, photorealistic, realistic, ray tracing, render, Unreal, Octane, 8k, HDR, "
+    "hyper-detailed skin, glossy plastic look, harsh specular highlights, lens flare, depth of field, "
+    "modern clothes, text, watermark, caption, logo, signature, "
+    "blurry, ugly, deformed, extra limbs, duplicate, "
+    "blue eyes, green eyes, grey eyes, blonde hair, white hair, red hair, no hat, missing hat, different hat, "
+    "different clothing, wrong robe color, western clothing, jeans, t-shirt"
 )
 
 # ===== STORYBOARD SETTINGS =====
@@ -137,6 +142,23 @@ MORALS = [
 
 # Lighting hint (consistent across all frames)
 LIGHTING_HINT = "sunlight from the left, warm daylight, soft shadows"
+
+# Consistency settings
+# A fixed set of traits and style cues that are injected into every image prompt
+CHARACTER_TRAITS = {
+    "name": "Aldar Kose",
+    "eye_color": "dark brown",
+    "hair": "black hair in a small topknot",
+    "facial_hair": "distinct small mustache",
+    "clothing": "orange patterned chapan robe with traditional Kazakh ornaments",
+    "hat": "felt kalpak hat",
+    "expression": "friendly, clever, mischievous",
+}
+
+STYLE_LOCK = (
+    "consistent 2D cel-shaded anime-inspired style, smooth clean lineart, flat colors, "
+    "soft ambient shading, warm earthy palette, consistent line thickness across frames"
+)
 
 # ===== API SETTINGS =====
 

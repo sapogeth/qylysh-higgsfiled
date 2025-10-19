@@ -10,16 +10,32 @@ const storyText = document.getElementById('storyText');
 const framesContainer = document.getElementById('framesContainer');
 const downloadBtn = document.getElementById('downloadBtn');
 const newStoryBtn = document.getElementById('newStoryBtn');
+const useIdentityEl = document.getElementById('useIdentity');
+const identityControls = document.getElementById('identityControls');
+const referenceImageEl = document.getElementById('referenceImage');
+const identityScaleEl = document.getElementById('identityScale');
+const identityScaleValue = document.getElementById('identityScaleValue');
 
 // State
 let currentStoryboard = null;
 
 // Event Listeners
-generateBtn.addEventListener('click', generateStoryboard);
+generateBtn.addEventListener('click', generateStoryboardStream);
 newStoryBtn.addEventListener('click', resetForm);
 downloadBtn.addEventListener('click', downloadAllImages);
 
 // Allow Enter key to submit (with Shift+Enter for new line)
+// Identity controls visibility and value
+if (useIdentityEl) {
+    useIdentityEl.addEventListener('change', () => {
+        identityControls.style.display = useIdentityEl.checked ? 'block' : 'none';
+    });
+}
+if (identityScaleEl) {
+    identityScaleEl.addEventListener('input', () => {
+        identityScaleValue.textContent = identityScaleEl.value;
+    });
+}
 promptInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -27,8 +43,8 @@ promptInput.addEventListener('keydown', (e) => {
     }
 });
 
-// Main function to generate storyboard
-async function generateStoryboard() {
+// Streaming generation: render frames as they arrive
+async function generateStoryboardStream() {
     const prompt = promptInput.value.trim();
 
     // Validation
@@ -48,31 +64,98 @@ async function generateStoryboard() {
     disableButton(generateBtn);
 
     try {
-        // Call API
-        const response = await fetch('/api/generate', {
+    // Prepare UI for streaming
+    outputSection.style.display = 'block';
+    framesContainer.innerHTML = '';
+    storyText.innerHTML = '';
+
+        // Start streaming from server
+        const payload = { prompt };
+        if (useIdentityEl && useIdentityEl.checked) {
+            payload.identity = {
+                use: true,
+                reference: referenceImageEl ? referenceImageEl.value : 'aldar1.png',
+                scale: identityScaleEl ? parseFloat(identityScaleEl.value) : 0.6
+            };
+        }
+
+        const response = await fetch('/api/generate/stream', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ prompt: prompt })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to generate storyboard');
+        if (!response.ok || !response.body) {
+            throw new Error('Failed to start streaming generation');
         }
 
-        const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.error || 'Generation failed');
+        // Pre-render a few skeleton cards while we wait for first events
+        const skeletons = [];
+        const SKELETON_COUNT = 6; // initial guess; we will trim/replace as real frames arrive
+        for (let i = 0; i < SKELETON_COUNT; i++) {
+            const sk = createSkeletonCard(i + 1);
+            skeletons.push(sk);
+            framesContainer.appendChild(sk);
         }
 
-        // Store storyboard
-        currentStoryboard = data;
+        // Read NDJSON chunks
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        const frames = [];
 
-        // Display results
-        displayStoryboard(data);
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+
+            // Process complete lines
+            let newlineIndex;
+            while ((newlineIndex = buffer.indexOf('\n')) >= 0) {
+                const line = buffer.slice(0, newlineIndex).trim();
+                buffer = buffer.slice(newlineIndex + 1);
+                if (!line) continue;
+
+                let event;
+                try { event = JSON.parse(line); } catch { continue; }
+
+                if (event.type === 'story') {
+                    storyText.innerHTML = `
+                        <strong>Aldar Köse Story:</strong><br>
+                        ${escapeHtml(event.aldar_story)}
+                    `;
+                    // If we rendered too many skeletons, trim to total_frames
+                    const total = Math.max(0, Number(event.total_frames || SKELETON_COUNT));
+                    while (framesContainer.children.length > total) {
+                        framesContainer.removeChild(framesContainer.lastChild);
+                    }
+                } else if (event.type === 'frame') {
+                    const idx = event.index;
+                    const frame = event.frame;
+                    frames.push(frame);
+
+                    // If there is a skeleton at this index, replace it; else append
+                    const frameNum = frame.frame_number || (idx + 1);
+                    const card = createFrameCard(frame, frameNum);
+                    if (idx < framesContainer.children.length) {
+                        framesContainer.replaceChild(card, framesContainer.children[idx]);
+                    } else {
+                        framesContainer.appendChild(card);
+                    }
+                    // Scroll as new frames appear
+                    card.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                } else if (event.type === 'error') {
+                    throw new Error(event.message || 'Generation error');
+                } else if (event.type === 'complete') {
+                    currentStoryboard = { storyboard: frames, metadata: { aldar_story: storyText.textContent } };
+                    // Remove any remaining skeletons at the end
+                    const realCount = frames.length;
+                    while (framesContainer.children.length > realCount) {
+                        framesContainer.removeChild(framesContainer.lastChild);
+                    }
+                }
+            }
+        }
 
     } catch (error) {
         console.error('Generation error:', error);
@@ -81,6 +164,22 @@ async function generateStoryboard() {
         hideLoading();
         enableButton(generateBtn);
     }
+}
+
+// Create a skeleton placeholder card
+function createSkeletonCard(frameNumber) {
+    const card = document.createElement('div');
+    card.className = 'frame-card skeleton-card';
+    card.innerHTML = `
+        <div class="skeleton-image skeleton-shimmer"></div>
+        <div class="frame-content">
+            <span class="frame-number">Frame ${frameNumber}</span>
+            <div class="skeleton-line wide skeleton-shimmer"></div>
+            <div class="skeleton-line mid skeleton-shimmer"></div>
+            <div class="skeleton-line short skeleton-shimmer"></div>
+        </div>
+    `;
+    return card;
 }
 
 // Display the generated storyboard

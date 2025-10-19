@@ -45,6 +45,30 @@
                 </button>
 
                 <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+                <div style="margin-top:20px; background:#f8f9fa; padding:12px; border-radius:10px;">
+                    <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                        <input type="checkbox" id="useIdentity" />
+                        Lock identity to reference (stronger character match)
+                    </label>
+                    <div id="identityControls" style="display:none; margin-top:10px;">
+                        <label style="display:block; margin-bottom:8px;">
+                            Reference image:
+                            <select id="referenceImage" style="margin-left:8px;">
+                                <option value="aldar1.png">aldar1.png</option>
+                                <option value="aldar2.png">aldar2.png</option>
+                                <option value="aldar3.png">aldar3.png</option>
+                                <option value="aldar4.png">aldar4.png</option>
+                                <option value="aldar5.png">aldar5.png</option>
+                            </select>
+                        </label>
+                        <label style="display:block;">
+                            Identity strength: <span id="identityScaleValue">0.6</span>
+                            <input type="range" id="identityScale" min="0.3" max="0.9" step="0.05" value="0.6" style="width:100%;" />
+                        </label>
+                        <small style="color:#666;">Tip: 0.5–0.7 keeps identity while allowing pose/scene changes.</small>
+                    </div>
+                </div>
             </div>
         </section>
 

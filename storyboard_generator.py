@@ -400,20 +400,35 @@ Return ONLY the JSON array. No prose, no explanations."""
 
     def _build_image_prompt(self, frame: Dict[str, Any]) -> str:
         """Build DALL-E prompt from frame description"""
-
         base_style = (
-            "Children's storybook illustration style, warm colors, "
-            "detailed character illustration, cinematic lighting, "
-            "culturally authentic Kazakh setting"
+            "2D cel-shaded anime-inspired illustration, smooth clean outlines, flat colors, "
+            "soft ambient shading, warm palette, children's storybook vibe, "
+            "Kazakh folk art influence, culturally authentic setting, no photorealism"
+        )
+
+        # Consistent character traits and style lock
+        import config as _cfg
+        traits = _cfg.CHARACTER_TRAITS
+        style_lock = _cfg.STYLE_LOCK
+        # Reference-anchored description (non-image; descriptive only)
+        reference_style = (
+            "Matches Aldar Köse references: orange patterned chapan with Kazakh ornaments, felt kalpak hat, "
+            "dark hair in a small topknot, small mustache, friendly clever demeanor."
+        )
+        character_lock = (
+            f"Consistent character: {traits['name']}, {traits['eye_color']} eyes, {traits['hair']}, "
+            f"{traits['facial_hair']}, wearing {traits['clothing']} and {traits['hat']}, "
+            f"expression {traits['expression']}. "
         )
 
         prompt = (
             f"{self.character_description}. "
+            f"{character_lock}"
             f"{frame['description']}. "
             f"Setting: {frame['setting']}. "
             f"Shot type: {frame['shot_type']}. "
-            f"Lighting: {frame['lighting_hint']}. "
-            f"{base_style}"
+            f"Lighting: soft, even, minimal specular highlights. "
+            f"{base_style}. {style_lock}. {reference_style}"
         )
 
         return prompt

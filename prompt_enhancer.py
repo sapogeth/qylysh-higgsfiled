@@ -149,11 +149,17 @@ class PromptEnhancer:
         if is_non_english:
             # Translate key elements to English for SDXL
             core_scene = self._translate_to_english_description(description)
-            character = "Aldar Kose character"
-            style = "2D art, Kazakh style"
+            ct = config.CHARACTER_TRAITS
+            character = (
+                f"Aldar Kose, {ct['eye_color']} eyes, {ct['hair']}, {ct['facial_hair']}, "
+                f"wearing {ct['clothing']} and {ct['hat']}"
+            )
+            style = (
+                "2D cel-shaded anime-style, smooth clean outlines, flat colors, soft shadows, warm palette, Kazakh folk art"
+            )
 
-            # Very minimal prompt for non-English
-            prompt_parts = [core_scene, character, style]
+            # Very concise for non-English, but still enforce consistency
+            prompt_parts = [core_scene, character, style, config.STYLE_LOCK]
             current_prompt = ", ".join(prompt_parts)
         else:
             # English text - use full enhancement
@@ -161,10 +167,17 @@ class PromptEnhancer:
             core_scene = self._simplify_description(description)
 
             # 2. ESSENTIAL: Character identification (compact)
-            character = "Aldar Kose, orange chapan, topknot"
+            # Inject consistent character traits
+            ct = config.CHARACTER_TRAITS
+            character = (
+                f"Aldar Kose, {ct['eye_color']} eyes, {ct['hair']}, {ct['facial_hair']}, "
+                f"wearing {ct['clothing']} and {ct['hat']}"
+            )
 
             # 3. ESSENTIAL: Visual style (compact)
-            style = "2D storybook, warm colors, Kazakh folk art"
+            style = (
+                "2D cel-shaded anime-style, smooth clean outlines, flat colors, soft shadows, warm palette, Kazakh folk art"
+            )
 
             # 4. OPTIONAL: Shot type (if space allows)
             shot = self.shot_type_prompts.get(shot_type, 'medium')
@@ -173,7 +186,8 @@ class PromptEnhancer:
             setting_brief = self._simplify_setting(setting)
 
             # 6. OPTIONAL: Quality tags (if space allows)
-            quality = "detailed, masterpiece"
+            # Style lock to enforce consistent look
+            quality = f"masterpiece, clean lines, {config.STYLE_LOCK}"
 
             # Build prompt with priority order
             # Start with essentials

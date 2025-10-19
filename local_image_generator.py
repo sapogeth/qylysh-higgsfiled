@@ -37,6 +37,7 @@ class LocalImageGenerator:
         self.enhancer = PromptEnhancer()
         self.device = config.get_device()
         self.dtype = config.get_dtype()
+        self.ip_adapter_loaded = False
 
         # Determine if we should lazy load
         self.lazy_load = lazy_load if lazy_load is not None else config.LAZY_LOAD_MODEL
@@ -152,13 +153,41 @@ class LocalImageGenerator:
             self._log_progress(f"❌ {error_msg}", 0, 100)
             raise RuntimeError(error_msg)
 
+    def _ensure_ip_adapter(self):
+        """Lazy-load IP-Adapter weights if available in diffusers."""
+        if self.ip_adapter_loaded:
+            return
+        try:
+            # Common SDXL IP-Adapter weights: repository provides sdxl models in subfolder
+            self._log_progress("Loading IP-Adapter for identity guidance...", 0, 1)
+            # Try common variants
+            tried = []
+            for kwargs in [
+                {"pretrained_model_name_or_path": "h94/IP-Adapter", "subfolder": "sdxl_models", "weight_name": "ip-adapter_sdxl.bin"},
+                {"pretrained_model_name_or_path": "h94/IP-Adapter", "subfolder": "sdxl_models", "weight_name": "ip-adapter_sdxl_vit-h.safetensors"},
+                {"pretrained_model_name_or_path": "h94/IP-Adapter", "subfolder": "sdxl_models"},
+            ]:
+                try:
+                    self.pipe.load_ip_adapter(**kwargs)
+                    self.ip_adapter_loaded = True
+                    self._log_progress("✓ IP-Adapter loaded", 1, 1)
+                    break
+                except Exception as e:
+                    tried.append(str(e))
+            if not self.ip_adapter_loaded:
+                self._log_progress("⚠️  Could not load IP-Adapter automatically; proceeding without it", 1, 1)
+        except Exception as e:
+            self._log_progress(f"⚠️  IP-Adapter not available: {e}", 1, 1)
+
     def generate_single(
         self,
         prompt: str,
         negative_prompt: Optional[str] = None,
         num_inference_steps: int = None,
         guidance_scale: float = None,
-        seed: Optional[int] = None
+        seed: Optional[int] = None,
+        ref_image: Optional["Image.Image"] = None,
+        ip_adapter_scale: Optional[float] = None
     ) -> Image.Image:
         """
         Generate a single image from a prompt
@@ -192,15 +221,44 @@ class LocalImageGenerator:
 
         # Generate image
         with torch.no_grad():
-            result = self.pipe(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                num_inference_steps=num_inference_steps,
-                guidance_scale=guidance_scale,
-                generator=generator,
-                height=config.IMAGE_HEIGHT,
-                width=config.IMAGE_WIDTH,
-            )
+            if ref_image is not None:
+                # Ensure IP-Adapter is ready
+                self._ensure_ip_adapter()
+                scale = ip_adapter_scale if ip_adapter_scale is not None else getattr(config, "IP_ADAPTER_SCALE", 0.6)
+                try:
+                    result = self.pipe(
+                        prompt=prompt,
+                        negative_prompt=negative_prompt,
+                        num_inference_steps=num_inference_steps,
+                        guidance_scale=guidance_scale,
+                        generator=generator,
+                        height=config.IMAGE_HEIGHT,
+                        width=config.IMAGE_WIDTH,
+                        image=ref_image,
+                        ip_adapter_scale=scale,
+                    )
+                except TypeError:
+                    # Fallback if older diffusers signature; omit ip_adapter_scale
+                    result = self.pipe(
+                        prompt=prompt,
+                        negative_prompt=negative_prompt,
+                        num_inference_steps=num_inference_steps,
+                        guidance_scale=guidance_scale,
+                        generator=generator,
+                        height=config.IMAGE_HEIGHT,
+                        width=config.IMAGE_WIDTH,
+                        image=ref_image,
+                    )
+            else:
+                result = self.pipe(
+                    prompt=prompt,
+                    negative_prompt=negative_prompt,
+                    num_inference_steps=num_inference_steps,
+                    guidance_scale=guidance_scale,
+                    generator=generator,
+                    height=config.IMAGE_HEIGHT,
+                    width=config.IMAGE_WIDTH,
+                )
 
         return result.images[0]
 

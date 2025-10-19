@@ -88,7 +88,7 @@ def test_generator():
     print()
     print("Next steps:")
     print("1. Run: python app.py")
-    print("2. Visit: http://localhost:5000")
+    print("2. Visit: http://localhost:8080")
     print("3. Enter any story prompt and see Aldar Köse in action!")
     print()
 
