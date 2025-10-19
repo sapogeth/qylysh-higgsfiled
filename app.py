@@ -8,6 +8,7 @@ import os
 import json
 from datetime import datetime
 from storyboard_generator import StoryboardGenerator
+import config
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/generated'
@@ -20,8 +21,8 @@ os.makedirs('static/js', exist_ok=True)
 os.makedirs('templates', exist_ok=True)
 
 # Initialize the storyboard generator
-# Force API mode (no local SDXL / no LoRA)
-generator = StoryboardGenerator(use_local=False)
+# Use local SDXL for image generation
+generator = StoryboardGenerator(use_local=True)
 
 
 @app.route('/')
@@ -206,6 +207,12 @@ def health_check():
 def serve_generated_image(filename):
     """Serve generated images"""
     return send_from_directory('static/generated', filename)
+
+
+@app.route('/favicon.ico')
+def favicon():
+    """Serve favicon"""
+    return send_from_directory('static', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
 if __name__ == '__main__':

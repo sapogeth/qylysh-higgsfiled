@@ -383,3 +383,120 @@ footer {
         width: 100%;
     }
 }
+
+/* Prompt Suggestion Cards */
+.prompt-suggestions {
+    margin: 20px 0 25px 0;
+}
+
+.suggestions-title {
+    font-size: 1em;
+    color: #ecf0f1;
+    margin-bottom: 15px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.suggestion-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.suggestion-card {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border: 2px solid #3a506b;
+    border-radius: 12px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.suggestion-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(236, 240, 241, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.suggestion-card:hover::before {
+    left: 100%;
+}
+
+.suggestion-card:hover {
+    transform: translateY(-3px);
+    border-color: #e67e22;
+    box-shadow: 0 8px 20px rgba(230, 126, 34, 0.3);
+    background: linear-gradient(135deg, #34495e 0%, #3a506b 100%);
+}
+
+.suggestion-card:active {
+    transform: translateY(-1px);
+}
+
+.card-emoji {
+    font-size: 2.5em;
+    text-align: center;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.card-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #e67e22;
+    margin-bottom: 8px;
+    text-align: center;
+    line-height: 1.3;
+}
+
+.card-description {
+    font-size: 0.9em;
+    color: #bdc3c7;
+    line-height: 1.5;
+    text-align: center;
+}
+
+/* Responsive for prompt cards */
+@media (max-width: 768px) {
+    .suggestion-cards {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .card-emoji {
+        font-size: 2em;
+    }
+    
+    .card-title {
+        font-size: 1em;
+    }
+    
+    .card-description {
+        font-size: 0.85em;
+    }
+}
+
+/* Add subtle animation on page load */
+.suggestion-card {
+    animation: fadeInUp 0.5s ease-out backwards;
+}
+
+.suggestion-card:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.suggestion-card:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.suggestion-card:nth-child(3) {
+    animation-delay: 0.3s;
+}

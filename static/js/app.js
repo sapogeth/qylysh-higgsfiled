@@ -23,8 +23,41 @@ downloadBtn.addEventListener('click', downloadAllImages);
 promptInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        generateStoryboard();
+        generateStoryboardStream();
     }
+});
+
+// Suggestion cards click handlers
+document.addEventListener('DOMContentLoaded', () => {
+    const suggestionCards = document.querySelectorAll('.suggestion-card');
+
+    suggestionCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const prompt = card.getAttribute('data-prompt');
+            promptInput.value = prompt;
+
+            // Add visual feedback
+            card.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                card.style.transform = '';
+            }, 150);
+
+            // Scroll to textarea
+            promptInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Focus on textarea
+            setTimeout(() => {
+                promptInput.focus();
+                // Move cursor to end
+                promptInput.setSelectionRange(prompt.length, prompt.length);
+            }, 300);
+        });
+
+        // Add hover effect for better UX
+        card.addEventListener('mouseenter', () => {
+            card.style.cursor = 'pointer';
+        });
+    });
 });
 
 // Streaming generation: render frames as they arrive
