@@ -1,0 +1,122 @@
+{
+  "face_shape": {
+    "feature": "square face",
+    "appearances": 2,
+    "avg_confidence": 0.33013100922107697,
+    "all_detections": [
+      [
+        "square face",
+        2
+      ],
+      [
+        "angular face",
+        1
+      ],
+      [
+        "oval face",
+        1
+      ],
+      [
+        "round face",
+        1
+      ]
+    ]
+  },
+  "eyes": {
+    "feature": "almond-shaped eyes",
+    "appearances": 5,
+    "avg_confidence": 0.44943644404411315,
+    "all_detections": [
+      [
+        "almond-shaped eyes",
+        5
+      ]
+    ]
+  },
+  "facial_hair": {
+    "feature": "clean shaven",
+    "appearances": 2,
+    "avg_confidence": 0.43804405629634857,
+    "all_detections": [
+      [
+        "clean shaven",
+        2
+      ],
+      [
+        "no facial hair",
+        2
+      ],
+      [
+        "thin mustache",
+        1
+      ]
+    ]
+  },
+  "hair_style": {
+    "feature": "topknot",
+    "appearances": 5,
+    "avg_confidence": 0.7330089926719665,
+    "all_detections": [
+      [
+        "topknot",
+        5
+      ]
+    ]
+  },
+  "clothing_color": {
+    "feature": "brown robe",
+    "appearances": 5,
+    "avg_confidence": 0.6707003295421601,
+    "all_detections": [
+      [
+        "brown robe",
+        5
+      ]
+    ]
+  },
+  "art_style": {
+    "feature": "cartoon style",
+    "appearances": 4,
+    "avg_confidence": 0.8196547776460648,
+    "all_detections": [
+      [
+        "cartoon style",
+        4
+      ],
+      [
+        "children's book style",
+        1
+      ]
+    ]
+  },
+  "expression": {
+    "feature": "neutral expression",
+    "appearances": 3,
+    "avg_confidence": 0.46350786089897156,
+    "all_detections": [
+      [
+        "neutral expression",
+        3
+      ],
+      [
+        "happy",
+        2
+      ]
+    ]
+  },
+  "background": {
+    "feature": "detailed background",
+    "appearances": 3,
+    "avg_confidence": 0.4776957631111145,
+    "all_detections": [
+      [
+        "detailed background",
+        3
+      ],
+      [
+        "plain background",
+        2
+      ]
+    ]
+  }
+}

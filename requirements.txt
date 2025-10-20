@@ -18,3 +18,8 @@ safetensors>=0.4.0
 peft>=0.7.0
 scipy>=1.11.0
 omegaconf>=2.3.0
+
+# Competitive Training Dependencies
+scikit-image>=0.22.0  # For SSIM (structural similarity)
+numpy>=1.24.0  # For numerical operations
+tqdm>=4.66.0  # Progress bars for training
