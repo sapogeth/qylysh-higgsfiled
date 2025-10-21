@@ -86,6 +86,10 @@ class LoRATrainer:
         """Настройка LoRA конфигурации"""
         print("[3/5] Настройка LoRA адаптера...")
 
+        # Enable gradient checkpointing BEFORE applying LoRA to save VRAM
+        self.pipe.unet.enable_gradient_checkpointing()
+        print("✓ Gradient checkpointing enabled (reduces VRAM usage)")
+
         # LoRA конфигурация для UNet
         lora_config = LoraConfig(
             r=config.LORA_RANK,  # 16
@@ -162,6 +166,9 @@ class LoRATrainer:
             total_loss = 0
 
             for img, prompt in zip(self.images, self.prompts):
+                # Clear cache before each image to prevent OOM
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
                 # Конвертируем изображение в latent
                 with torch.no_grad():
                     # Нормализация
@@ -238,6 +245,11 @@ class LoRATrainer:
                 optimizer.step()
 
                 total_loss += loss.item()
+
+                # Aggressive cleanup after each training step
+                del model_pred, loss, noisy_latents, latents, noise
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
 
             avg_loss = total_loss / len(self.images)
             progress_bar.set_postfix({"loss": f"{avg_loss:.4f}"})
