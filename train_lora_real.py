@@ -185,18 +185,38 @@ class LoRATrainer:
 
                 noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
-                # Получаем text embeddings (SDXL): используем encode_prompt, чтобы получить корректные формы
-                # prompt_embeds: [B, seq_len, 2048], pooled_prompt_embeds: [B, 1280]
+                # Получаем text embeddings (SDXL) и приводим формы под разные версии diffusers
+                # Некоторые версии возвращают 2 значения, другие — 4 (включая негативные эмбеддинги)
                 with torch.no_grad():
-                    prompt_embeds, pooled_prompt_embeds = self.pipe.encode_prompt(
+                    enc_res = self.pipe.encode_prompt(
                         prompt=prompt,
                         device=self.device,
                         num_images_per_prompt=1,
                         do_classifier_free_guidance=False,
                     )
+
+                    # Универсальная распаковка
+                    if isinstance(enc_res, (list, tuple)):
+                        if len(enc_res) == 2:
+                            prompt_embeds, pooled_prompt_embeds = enc_res
+                        elif len(enc_res) == 4:
+                            # (prompt_embeds, negative_prompt_embeds, pooled_prompt_embeds, negative_pooled_prompt_embeds)
+                            prompt_embeds, _, pooled_prompt_embeds, _ = enc_res
+                        else:
+                            # На всякий случай: берём первые подходящие элементы
+                            prompt_embeds = enc_res[0]
+                            pooled_prompt_embeds = enc_res[2] if len(enc_res) > 2 else None
+                    else:
+                        # Старые сигнатуры могут вернуть объект; пробуем как 2 значения
+                        prompt_embeds, pooled_prompt_embeds = enc_res
+
+                    # Если по какой-то причине pooled отсутствует — делаем усреднение как запасной вариант
+                    if pooled_prompt_embeds is None:
+                        pooled_prompt_embeds = prompt_embeds.mean(dim=1)
+
                     # Приводим тип к текущему dtype
-                    prompt_embeds = prompt_embeds.to(dtype=self.dtype)
-                    pooled_prompt_embeds = pooled_prompt_embeds.to(dtype=self.dtype)
+                    prompt_embeds = prompt_embeds.to(device=self.device, dtype=self.dtype)
+                    pooled_prompt_embeds = pooled_prompt_embeds.to(device=self.device, dtype=self.dtype)
 
                 # Предсказание noise
                 model_pred = self.pipe.unet(
