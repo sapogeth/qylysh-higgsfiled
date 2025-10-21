@@ -44,3 +44,4 @@ Thumbs.db
 
 # Logs
 *.log
+models/aldar_kose_lora.safetensors/
