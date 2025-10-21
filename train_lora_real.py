@@ -185,34 +185,18 @@ class LoRATrainer:
 
                 noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
-                # Получаем text embeddings
+                # Получаем text embeddings (SDXL): используем encode_prompt, чтобы получить корректные формы
+                # prompt_embeds: [B, seq_len, 2048], pooled_prompt_embeds: [B, 1280]
                 with torch.no_grad():
-                    text_inputs = self.pipe.tokenizer(
-                        prompt,
-                        padding="max_length",
-                        max_length=self.pipe.tokenizer.model_max_length,
-                        truncation=True,
-                        return_tensors="pt"
+                    prompt_embeds, pooled_prompt_embeds = self.pipe.encode_prompt(
+                        prompt=prompt,
+                        device=self.device,
+                        num_images_per_prompt=1,
+                        do_classifier_free_guidance=False,
                     )
-                    text_embeddings = self.pipe.text_encoder(
-                        text_inputs.input_ids.to(self.device)
-                    )[0]
-
-                    # Для SDXL нужен второй text encoder
-                    text_inputs_2 = self.pipe.tokenizer_2(
-                        prompt,
-                        padding="max_length",
-                        max_length=self.pipe.tokenizer_2.model_max_length,
-                        truncation=True,
-                        return_tensors="pt"
-                    )
-                    text_embeddings_2 = self.pipe.text_encoder_2(
-                        text_inputs_2.input_ids.to(self.device)
-                    )[0]
-
-                    # Объединяем embeddings
-                    pooled_prompt_embeds = text_embeddings_2
-                    prompt_embeds = torch.cat([text_embeddings, text_embeddings_2], dim=-1)
+                    # Приводим тип к текущему dtype
+                    prompt_embeds = prompt_embeds.to(dtype=self.dtype)
+                    pooled_prompt_embeds = pooled_prompt_embeds.to(dtype=self.dtype)
 
                 # Предсказание noise
                 model_pred = self.pipe.unet(
